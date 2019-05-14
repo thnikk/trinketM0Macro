@@ -30,31 +30,31 @@
 *************************************************/
 
 #include <Bounce2.h>
-#include <Keyboard.h>
-#include <Mouse.h>
+//#include <Keyboard.h>
+//#include <Mouse.h>
 #include <FlashAsEEPROM.h>
 #include <Adafruit_DotStar.h>
-
+#include "HID-Project.h"
 
 bool serialDebug = 0;
 
 // Version number (chnge to update EEPROM values)
-bool version = 0;
+bool version = 1;
 
 // First-time mapping values. Update version to write
 // new values to EEPROM. Values available at
 // ASCII table here: http://www.asciitable.com/
 byte byteMapping[6][6] = {
+  { 5, 6, 4, 8, 9, 7 }, // Media
   { 97, 115, 100, 122, 120, 99 }, // asdzxc (osu)
   { 113, 119, 101, 97, 115, 100 }, // qweasd (FPS)
   { 0, 218, 0, 216, 217, 215 }, // arrow keys
   { 49, 50, 51, 52, 53, 54 }, // 123456
-  { 0, 0, 0, 0, 0, 0 }, // Blank
   { 0, 0, 0, 0, 0, 0 }  // Blank
 };
 
 // Arrays for modifier interpreter
-byte specialLength = 33; // Number of "special keys"
+byte specialLength = 39; // Number of "special keys"
 String specialKeys[] = {
   "shift", "ctrl", "super",
   "alt", "f1", "f2", "f3",
@@ -66,7 +66,9 @@ String specialKeys[] = {
   "pgup", "pgdn", "up",
   "down", "left", "right",
   "tab", "escape", "MB1",
-  "MB2", "MB3"
+  "MB2", "MB3", "mute",
+  "volup", "voldown", "play",
+  "playnext", "playprev"
 };
 byte specialByte[] = {
   129, 128, 131, 130,
@@ -76,7 +78,8 @@ byte specialByte[] = {
   209, 212, 178, 176,
   210, 213, 211, 214,
   218, 217, 216, 215,
-  179, 177, 1, 2, 3
+  179, 177, 1, 2, 3,
+  4, 5, 6, 7, 8, 9
 };
 
 byte inputBuffer; // Stores specialByte after conversion
@@ -103,7 +106,7 @@ bool bounce[numkeys+1]; // +1 because length is NOT zero indexed
 char mapping[pages][numkeys][3];
 
 // Neopixel library initializtion
-Adafruit_DotStar pixels = Adafruit_DotStar( 1, 7, 8, DOTSTAR_BRG);
+Adafruit_DotStar pixels = Adafruit_DotStar(1, 7, 8, DOTSTAR_BRG);
 byte rgb[3][1]; // Declare RGB array
 
 unsigned long previousMillis = 0; // Serial monitor timer
@@ -149,6 +152,9 @@ void setup() {
   b6d.interval(8);
   b7d.attach(button[6]);
   b7d.interval(8);
+
+  Keyboard.begin();
+  Consumer.begin();
 }
 
 void loadEEPROM() {
@@ -410,7 +416,7 @@ void remapSerial() {
     } // Key for loop
     Serial.println();
     Serial.println("Mapping saved!");
-  } // Main while loop
+  } // Main while loopf
   Serial.println("Exiting.");
 } // Remapper loop
 byte inputInterpreter(String input) { // Checks inputs for a preceding colon and converts said input to byte
@@ -469,9 +475,9 @@ void sideButton(){
   }
   if(bounce[numkeys]){
     if (hold == 1) { // Press escape if pressed and released
-      Keyboard.press(177);
+      Keyboard.press(KEY_ESC);
       delay(8);
-      Keyboard.release(177);
+      Keyboard.release(KEY_ESC);
     }
     if (hold == 2) { EEPROM.write(1, page); EEPROM.commit();} // save page value
     hold = 0;
@@ -487,11 +493,17 @@ void keyboard(){
       if (!pressed[a]) { // This made sense to me at one point
         for (int b = 0; b < 3; b++) if (!bounce[a]) { // For each
           if (mapping[page][a][b] != 0) {
-            if (mapping[page][a][b] > 3) Keyboard.press(mapping[page][a][b]);
+            if (mapping[page][a][b] > 10) Keyboard.press(mapping[page][a][b]);
             else {
               if (mapping[page][a][b] == 1) Mouse.press(MOUSE_LEFT);
               else if (mapping[page][a][b] == 2) Mouse.press(MOUSE_RIGHT);
               else if (mapping[page][a][b] == 3) Mouse.press(MOUSE_MIDDLE);
+              else if (mapping[page][a][b] == 4) Consumer.write(MEDIA_VOL_MUTE);
+              else if (mapping[page][a][b] == 5) Consumer.write(MEDIA_VOL_UP);
+              else if (mapping[page][a][b] == 6) Consumer.write(MEDIA_VOL_DOWN);
+              else if (mapping[page][a][b] == 7) Consumer.write(MEDIA_PLAY_PAUSE);
+              else if (mapping[page][a][b] == 8) Consumer.write(MEDIA_NEXT);
+              else if (mapping[page][a][b] == 9) Consumer.write(MEDIA_PREV);
             }
           }
           pressed[a] = 1; // nonsense
@@ -500,12 +512,12 @@ void keyboard(){
       if (pressed[a]) {
         for (int b = 0; b < 3; b++) if (bounce[a]) {
           if (mapping[page][a][b] != 0) {
-              if (mapping[page][a][b] > 3) Keyboard.release(mapping[page][a][b]);
+              if (mapping[page][a][b] > 10) Keyboard.release(mapping[page][a][b]);
             else {
               if (mapping[page][a][b] == 1) Mouse.release(MOUSE_LEFT);
               else if (mapping[page][a][b] == 2) Mouse.release(MOUSE_RIGHT);
               else if (mapping[page][a][b] == 3) Mouse.release(MOUSE_MIDDLE);
-            }
+              }
             }
           pressed[a] = 0;
         }
