@@ -34,7 +34,7 @@
 #include <Mouse.h>
 #include <FlashAsEEPROM.h>
 #include <Adafruit_DotStar.h>
-
+#include "Adafruit_FreeTouch.h"
 
 bool serialDebug = 0;
 
@@ -54,7 +54,7 @@ byte byteMapping[6][6] = {
 };
 
 // Arrays for modifier interpreter
-byte specialLength = 33; // Number of "special keys"
+byte specialLength = 43; // Number of "special keys"
 String specialKeys[] = {
   "shift", "ctrl", "super",
   "alt", "f1", "f2", "f3",
@@ -66,7 +66,10 @@ String specialKeys[] = {
   "pgup", "pgdn", "up",
   "down", "left", "right",
   "tab", "escape", "MB1",
-  "MB2", "MB3"
+  "MB2", "MB3", "num1",
+  "num2", "num3", "num4",
+  "num5", "num6", "num7",
+  "num8", "num9", "num0"
 };
 byte specialByte[] = {
   129, 128, 131, 130,
@@ -76,7 +79,9 @@ byte specialByte[] = {
   209, 212, 178, 176,
   210, 213, 211, 214,
   218, 217, 216, 215,
-  179, 177, 1, 2, 3
+  179, 177, 1, 2, 3,
+  225,226,227,228,229,
+  230,231,232,233,234
 };
 
 byte inputBuffer; // Stores specialByte after conversion
@@ -86,7 +91,7 @@ byte b = 50; // LED brightness
 // MacroPad Specific
 
 // Array for buttons (for use in for loop.)
-const byte button[] = { 0, 1, 2, 3, 4, 20, 19 };
+const byte button[] = { 0, 1, 2, 3, 20, 19 };
 
 // How many keys (0 indexed)
 #define numkeys 6 // Use define for compiler level
@@ -121,7 +126,7 @@ Bounce b3d = Bounce();
 Bounce b4d = Bounce();
 Bounce b5d = Bounce();
 Bounce b6d = Bounce();
-Bounce b7d = Bounce();
+Adafruit_FreeTouch qt_1 = Adafruit_FreeTouch(4, OVERSAMPLE_8, RESISTOR_50K, FREQ_MODE_NONE);
 
 void setup() {
   Serial.begin(9600);
@@ -133,6 +138,8 @@ void setup() {
   for (int x = 0; x <= numkeys; x++) {
    pinMode(button[x], INPUT_PULLUP);
   }
+
+  qt_1.begin();
 
   // Bounce initializtion
   b1d.attach(button[0]);
@@ -147,9 +154,7 @@ void setup() {
   b5d.interval(8);
   b6d.attach(button[5]);
   b6d.interval(8);
-  b7d.attach(button[6]);
-  b7d.interval(8);
-}
+  }
 
 void loadEEPROM() {
   // Initialize EEPROM
@@ -180,6 +185,9 @@ void loadEEPROM() {
     }
   }
 }
+
+int threshold = 700;
+int qt;
 
 void loop() {
 
@@ -445,7 +453,6 @@ void bounceSetup() { // Upates input values once per loop after debouncing
   b4d.update();
   b5d.update();
   b6d.update();
-  b7d.update();
   // Write state to array for easy access
   bounce[0] = b1d.read();
   bounce[1] = b2d.read();
@@ -453,7 +460,8 @@ void bounceSetup() { // Upates input values once per loop after debouncing
   bounce[3] = b4d.read();
   bounce[4] = b5d.read();
   bounce[5] = b6d.read();
-  bounce[6] = b7d.read();
+  qt = qt_1.measure();
+  if (qt > threshold) bounce[6] = 0;  else if (qt < threshold-50 ) bounce[6] = 1;
 }
 void sideButton(){
   if(!bounce[numkeys]) { // Change hold value for release
