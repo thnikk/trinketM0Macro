@@ -54,7 +54,7 @@ byte byteMapping[6][6] = {
 };
 
 // Arrays for modifier interpreter
-byte specialLength = 43; // Number of "special keys"
+byte specialLength = 61; // Number of "special keys"
 String specialKeys[] = {
   "shift", "ctrl", "super",
   "alt", "f1", "f2", "f3",
@@ -69,7 +69,12 @@ String specialKeys[] = {
   "MB2", "MB3", "num1",
   "num2", "num3", "num4",
   "num5", "num6", "num7",
-  "num8", "num9", "num0"
+  "num8", "num9", "num0",
+  "num/", "num*", "num-",
+  "num+","numEnter","num.",
+  "F13","F14","F15","F16",
+  "F17","F18","F19","F20",
+"F21","F22","F23","F24"
 };
 byte specialByte[] = {
   129, 128, 131, 130,
@@ -81,7 +86,13 @@ byte specialByte[] = {
   218, 217, 216, 215,
   179, 177, 1, 2, 3,
   225,226,227,228,229,
-  230,231,232,233,234
+  230,231,232,233,234,
+  220,221,222,223,224,
+  235,KEY_F13,KEY_F14
+  ,KEY_F15,KEY_F16,KEY_F17
+  ,KEY_F18,KEY_F19,KEY_F20
+  ,KEY_F21,KEY_F22,KEY_F23,
+  KEY_F24
 };
 
 byte inputBuffer; // Stores specialByte after conversion
