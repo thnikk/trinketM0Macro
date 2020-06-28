@@ -146,7 +146,7 @@ void setup() {
   loadEEPROM();
 
   // Set input pullup resistors
-  for (int x = 0; x <= numkeys; x++) {
+  for (int x = 0; x < numkeys; x++) {
    pinMode(button[x], INPUT_PULLUP);
   }
 
